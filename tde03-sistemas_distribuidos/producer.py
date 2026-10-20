@@ -5,17 +5,17 @@ from database import Database
 import time
 
 
+
+database = Database("transactions.db")  
+
+producer = KafkaProducer(   
+    bootstrap_servers='kafka:9092',
+    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+    key_serializer=lambda k: k.encode('utf-8'))
+
+topic = "transactions_topic"
+
 def main():
-
-    database = Database("transactions.db")  
-
-    producer = KafkaProducer(   
-        bootstrap_servers='kafka:9092',
-        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
-        key_serializer=lambda k: k.encode('utf-8'))
-
-    topic = "transactions_topic"
-
 
     try:
         while True:
@@ -27,6 +27,7 @@ def main():
     except KeyboardInterrupt:
         print("Finalizando...")
         producer.close()
+
 
 if __name__ == "__main__":
     main()
