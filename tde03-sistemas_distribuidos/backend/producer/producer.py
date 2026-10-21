@@ -1,14 +1,13 @@
 from backend.shared.data import clients
 from transaction import Transaction
 from kafka.errors import KafkaError
-from colorama import Fore, init
+from colorama import Fore,Style, init
 from kafka import KafkaProducer
 import json
 import time
 import os
 
 
-init(autoreset=True)
 
 
 def main():
@@ -29,21 +28,21 @@ def main():
         while True:
             transaction = Transaction()
 
-            print(f"Enviando transação: "
+            print(Fore.CYAN + f"Enviando transação: "
                   f"id={transaction.id_transaction} | "
                   f"client={transaction.id_client} | "
                   f"amount=R${transaction.amount:.2f} | "
-                  f"city={transaction.city}",
+                  f"city={transaction.city}{Style.RESET_ALL}",
                   flush=True)
 
             try:
                 data = transaction.to_dict()
                 
-                key = data["id_transaction"]
+                key = data["id_client"]
                 producer.send(topic, value=data, key=key)
   
             except KafkaError as error:
-                print(Fore.RED + f"Erro ao enviar transação: {error}", flush=True)
+                print(Fore.RED + f"Erro ao enviar transação: {error}{Style.RESET_ALL}", flush=True)
 
             time.sleep(3) 
 

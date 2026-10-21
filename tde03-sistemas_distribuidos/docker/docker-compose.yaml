@@ -59,7 +59,10 @@ services:
       dockerfile: docker/dockerfile.consumer
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_PATH: /app/data/transactions.db
       PYTHONUNBUFFERED: "1"
+    volumes:
+      - ../data:/app/data
     depends_on:
       kafka:
         condition: service_healthy

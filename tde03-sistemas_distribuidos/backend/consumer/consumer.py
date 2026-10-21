@@ -1,12 +1,9 @@
 from backend.consumer.database import Database
 from datetime import datetime, timedelta
 from kafka import KafkaConsumer
-from colorama import Fore, init
+from colorama import Fore, Style, init
 import json
 import os
-
-
-init(autoreset=True)
 
 
 
@@ -38,7 +35,7 @@ def create_consumer():
 
 
 def main():
-    database = Database("transactions.db")   
+    database = Database(os.getenv("DATABASE_PATH", "transactions.db"))
     consumer = create_consumer()
 
     try: 
@@ -64,7 +61,7 @@ def main():
                     f"transaction_id={transaction['id_transaction']} | "
                     f"client={transaction['id_client']} | "
                     f"amount=R${transaction['amount']:.2f} | "
-                    f"city={transaction['city']}",
+                    f"city={transaction['city']}{Style.RESET_ALL}",
                     flush=True
                     )
             else:
@@ -73,7 +70,7 @@ def main():
                     f"id={transaction['id_transaction']} | "
                     f"client={transaction['id_client']} | "
                     f"amount=R${transaction['amount']:.2f} | "
-                    f"city={transaction['city']}",
+                    f"city={transaction['city']}{Style.RESET_ALL}",
                     flush=True
                 )
 
