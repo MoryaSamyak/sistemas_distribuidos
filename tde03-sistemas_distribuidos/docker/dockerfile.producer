@@ -2,8 +2,8 @@ FROM python:3.14
 
 WORKDIR /app
 
-COPY producer.py /app
+COPY producer.py transaction.py data.py ./
 
-RUN pip install kafka-python faker
+RUN pip install kafka-python 
 
 CMD ["python", "producer.py"]

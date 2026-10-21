@@ -39,6 +39,8 @@ services:
     build: 
       context: ..
       dockerfile: docker/dockerfile.producer
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - kafka
   consumer:
@@ -46,6 +48,8 @@ services:
     build:
       context: ..
       dockerfile: docker/dockerfile.consumer
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       - kafka
 

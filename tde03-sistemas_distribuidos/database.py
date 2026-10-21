@@ -1,38 +1,18 @@
 from contextlib import closing
 import sqlite3
-import uuid
-
+from data import clients, cities
 
 class Database:
     def __init__(self, db_name):
         self.db_name = db_name
         self.create_table()
         self.insert_clients()
-        self.insert_citys()
+        self.insert_cities()
 
     def connect(self):
         connection = sqlite3.connect(self.db_name)
         connection.execute("PRAGMA foreign_keys = ON")
         return connection
-
-    def get_random_client_id(self):
-        with closing(self.connect()) as conn:
-            row = conn.execute(
-                "SELECT id_client FROM clients ORDER BY RANDOM() LIMIT 1"
-            ).fetchone()
-        if row is None:
-            raise LookupError("No clients are available")
-        return row[0]
-
-    def get_random_city(self):
-        with closing(self.connect()) as conn:
-            row = conn.execute(
-                "SELECT name FROM cities ORDER BY RANDOM() LIMIT 1"
-            ).fetchone()
-        if row is None:
-            raise LookupError("No cities are available")
-        return row[0]
-
     
     def create_table(self): 
         with closing(self.connect()) as conn:
@@ -64,13 +44,9 @@ class Database:
     def insert_clients(self):
         with closing(self.connect()) as conn: 
             with conn:     
-                client_count = conn.execute(
-                    "SELECT COUNT(*) FROM clients"
-                    ).fetchone()[0]
-                if client_count < 15:
-                    conn.executemany(
-                    "INSERT INTO clients (id_client) VALUES (?)",
-                    ((str(uuid.uuid4()),) for _ in range(15 - client_count)), )
+                conn.executemany(
+                "INSERT OR IGNORE INTO clients (id_client) VALUES (?)",
+                [(client,) for client in clients] )
 
     def insert_cities(self):
         with closing(self.connect()) as conn:
@@ -78,44 +54,10 @@ class Database:
                 conn.executemany(
                     """INSERT OR IGNORE INTO cities (name, state, country)
                     VALUES (?, 'Ceará', 'Brasil')""",
-                    (
-                        (city,)
-                        for city in (
-                            "Abaiara",
-                            "Altaneira",
-                            "Antonina do Norte",
-                            "Araripe",
-                            "Assaré",
-                            "Aurora",
-                            "Barbalha",
-                            "Barro",
-                            "Brejo Santo",
-                            "Campos Sales",
-                            "Caririaçu",
-                            "Crato",
-                            "Farias Brito",
-                            "Granjeiro",
-                            "Jardim",
-                            "Jati",
-                            "Juazeiro do Norte",
-                            "Lavras da Mangabeira",
-                            "Mauriti",
-                            "Milagres",
-                            "Missão Velha",
-                            "Nova Olinda",
-                            "Penaforte",
-                            "Porteiras",
-                            "Potengi",
-                            "Salitre",
-                            "Santana do Cariri",
-                            "Tarrafas",
-                            "Várzea Alegre",
-                            )
-                    ),)
+                    [(city,) for city in cities])
     
 
     def insert_transaction(self, transaction):
-        dados = transaction.to_dict()
         with closing(self.connect()) as conn:
             with conn:
                 conn.execute("""INSERT INTO transactions( \
@@ -128,11 +70,44 @@ class Database:
                 fraude,
                 motivo_fraude
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (dados["id_transaction"],
-                dados["id_client"],
-                dados["valor"],
-                dados["country"],
-                dados["city"],
-                dados["hora"],
-                dados["fraude"],
-                dados["motivo_fraude"]))
+                (transaction["id_transaction"],
+                transaction["id_client"],
+                transaction["valor"],
+                transaction["country"],
+                transaction["city"],
+                transaction["hora"],
+                transaction["fraude"],
+                transaction["motivo_fraude"]))
+
+
+
+    def verify_date_geo(self, transaction, hora_transacao, horario_minimo):
+        with closing(self.connect()) as conn:
+            with conn:
+                resultado = conn.execute("""SELECT * FROM transactions WHERE 
+                id_client = ? 
+                AND city != ? 
+                AND hora > ?
+                AND hora < ?
+                  LIMIT 1""", (transaction["id_client"], 
+                               transaction["city"], 
+                               horario_minimo.isoformat(), 
+                               hora_transacao.isoformat())).fetchone()
+
+        return resultado is not None    
+
+    def verify_date_time(self, transaction, hora_transacao, horario_minimo):
+        with closing(self.connect()) as conn:
+            with conn:
+                resultado = conn.execute("""SELECT count(*) FROM transactions WHERE 
+                id_client = ? 
+                AND hora > ?
+                AND hora < ?
+                """, (transaction["id_client"],  
+                               horario_minimo.isoformat(), 
+                               hora_transacao.isoformat())).fetchone()
+
+        if resultado[0] >= 3:
+            return True
+        else:
+            return False
