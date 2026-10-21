@@ -1,6 +1,7 @@
+from backend.shared.data import clients, cities
 from contextlib import closing
 import sqlite3
-from data import clients, cities
+
 
 class Database:
     def __init__(self, db_name):
@@ -32,12 +33,12 @@ class Database:
                 conn.execute("""CREATE TABLE IF NOT EXISTS transactions (
                 id_transaction TEXT PRIMARY KEY,
                 id_client TEXT NOT NULL REFERENCES clients(id_client),
-                valor REAL NOT NULL,
+                amount REAL NOT NULL,
                 country TEXT NOT NULL,
                 city TEXT NOT NULL,
-                hora TEXT NOT NULL,
-                fraude INTEGER NOT NULL DEFAULT 0,
-                motivo_fraude TEXT
+                timestamp TEXT NOT NULL,
+                is_fraud INTEGER NOT NULL DEFAULT 0,
+                fraud_history TEXT
                 )""")
             
 
@@ -63,51 +64,52 @@ class Database:
                 conn.execute("""INSERT INTO transactions( \
                 id_transaction,
                 id_client,
-                valor,
+                amount,
                 country,
                 city,
-                hora,
-                fraude,
-                motivo_fraude
+                timestamp,
+                is_fraud,
+                fraud_history
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (transaction["id_transaction"],
                 transaction["id_client"],
-                transaction["valor"],
+                transaction["amount"],
                 transaction["country"],
                 transaction["city"],
-                transaction["hora"],
-                transaction["fraude"],
-                transaction["motivo_fraude"]))
+                transaction["timestamp"],
+                transaction["is_fraud"],
+                transaction["fraud_history"]))
 
 
 
-    def verify_date_geo(self, transaction, hora_transacao, horario_minimo):
+
+    def verify_date_geo(self, transaction, transaction_timestamp, minimum_timestamp):
         with closing(self.connect()) as conn:
             with conn:
-                resultado = conn.execute("""SELECT * FROM transactions WHERE 
+                result = conn.execute("""SELECT * FROM transactions WHERE 
                 id_client = ? 
                 AND city != ? 
-                AND hora > ?
-                AND hora < ?
+                AND timestamp > ?
+                AND timestamp < ?
                   LIMIT 1""", (transaction["id_client"], 
                                transaction["city"], 
-                               horario_minimo.isoformat(), 
-                               hora_transacao.isoformat())).fetchone()
+                               minimum_timestamp.isoformat(), 
+                               transaction_timestamp.isoformat())).fetchone()
 
-        return resultado is not None    
+        return result is not None    
 
-    def verify_date_time(self, transaction, hora_transacao, horario_minimo):
+    def verify_date_time(self, transaction, transaction_timestamp, minimum_timestamp):
         with closing(self.connect()) as conn:
             with conn:
-                resultado = conn.execute("""SELECT count(*) FROM transactions WHERE 
+                result = conn.execute("""SELECT count(*) FROM transactions WHERE 
                 id_client = ? 
-                AND hora > ?
-                AND hora < ?
+                AND timestamp >= ?
+                AND timestamp < ?
                 """, (transaction["id_client"],  
-                               horario_minimo.isoformat(), 
-                               hora_transacao.isoformat())).fetchone()
+                               minimum_timestamp.isoformat(), 
+                               transaction_timestamp.isoformat())).fetchone()
 
-        if resultado[0] >= 3:
+        if result[0] >= 3:
             return True
         else:
             return False
