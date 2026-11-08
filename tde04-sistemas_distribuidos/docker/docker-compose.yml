@@ -1,0 +1,22 @@
+services:
+
+  server01:
+    build:
+      context: ..
+      dockerfile: docker/dockerfile
+    ports:
+      - "8000:8000"
+  
+  server02:
+    build:
+      context: ..
+      dockerfile: docker/dockerfile
+    ports:
+      - "8001:8000"
+
+  server03:
+    build:
+      context: ..
+      dockerfile: docker/dockerfile
+    ports:
+      - "8002:8000"
