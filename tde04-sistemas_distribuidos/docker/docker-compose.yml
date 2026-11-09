@@ -20,3 +20,15 @@ services:
       dockerfile: docker/dockerfile
     ports:
       - "8002:8000"
+
+  load_balancer:
+    build:
+      context: ..
+      dockerfile: docker/dockerfile
+    command: python load_balance.py
+    ports:
+      - "8080:8080"
+    depends_on:
+      - server01
+      - server02
+      - server03

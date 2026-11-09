@@ -2,8 +2,8 @@ FROM python:3.14-slim
 
 WORKDIR /app
 
-COPY  backend/server.py .
+COPY  backend/ .
 
-EXPOSE 8000
+EXPOSE 8000 8080
 
 CMD ["python", "server.py"]
