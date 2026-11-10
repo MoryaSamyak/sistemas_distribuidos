@@ -25,7 +25,7 @@ services:
     build:
       context: ..
       dockerfile: docker/dockerfile
-    command: python load_balance.py
+    command: python load_balance/load_balance.py
     ports:
       - "8080:8080"
     depends_on:

@@ -1,7 +1,7 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from round_robin import RoundRobin
+from least_connections import LeastConnections
 
 
 
@@ -11,13 +11,13 @@ SERVER_LIST = [
     "http://server03:8000",
 ]
 
-balance = RoundRobin(SERVER_LIST) 
+balance = LeastConnections(SERVER_LIST)
 
 class LoadBalancerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
 
-        server = balance.get_next_server()
+        server = balance.get_server()
 
         print(f"Encaminhando requisição para: {server}" ,flush=True)
 
@@ -43,10 +43,15 @@ class LoadBalancerHandler(BaseHTTPRequestHandler):
                         "keep-alive",
                     ):
                         self.send_header(header_name, value)
+
                 self.end_headers()
                 self.wfile.write(body)
+
         except (URLError,TimeoutError,OSError) as error:
-            self.send_error(502, f"Erro ao encaminhar requisição: {error}")
+            self.send_error(502, f"Erro ao acessar servidor {server}: {error}")
+
+        finally:
+            balance.release_connection(server)
 
 def run():
     server = ThreadingHTTPServer(('0.0.0.0', 8080), LoadBalancerHandler)
