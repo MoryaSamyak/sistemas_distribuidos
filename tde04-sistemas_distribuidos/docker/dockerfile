@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY  backend/ .
 
+RUN pip install kafka-python requests
+
 EXPOSE 8000 8080
 
 CMD ["python", "server.py"]

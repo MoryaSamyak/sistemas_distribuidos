@@ -1,28 +1,78 @@
 import http.server
+import os
 import socket
+import random
+import json
+import requests 
+
+    
 
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):  
     def do_GET(self):
 
         server = socket.gethostname()
-        url = f"http://{server}:8000{self.path}"    
 
-        message = f"""
-        <html>
-            <body>
-                <h1>Servidor funcionando!</h1>
-                <p>Instancia: {server}</p>
-                <p>URL: {url}</p>
-            </body>
-        </html>
-        """
+        if self.path == "/movie":
+            self.get_movie(server)
+            return
+
         
         self.send_response(200)
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
 
-        self.wfile.write(bytes(message, "utf8"))
+
+    def get_movie(self, server):
+        token =  os.getenv("TMDB_BEARER_TOKEN")
+        base_url = os.getenv("TMDB_BASE_URL", "https://api.themoviedb.org/3")
+
+        if not token:
+            self.send_error(500, "Token de autenticação não configurado.")
+            return
+
+        url = f"{base_url}/discover/movie"
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json"
+        }
+
+        params = {
+            "language": "pt-BR",
+            "page": 1
+        }
+
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            movies = data.get("results", [])
+
+            if not movies:
+                self.send_error(404, "Nenhum filme encontrado.")
+                return
+
+            movie = random.choice(movies)
+
+            result = {"FilmShopNow. Uma indicação bacanuda para você assistir hoje!"
+                "server": server,
+                "movie": {
+                    "title": movie.get("title"),
+                    "overview": movie.get("overview"),
+                    "release_date": movie.get("release_date"),
+                    "vote_average": movie.get("vote_average")
+                }
+            }
+
+            response_body = json.dumps(result, ensure_ascii=False).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(response_body)))
+            self.end_headers()
+            self.wfile.write(response_body) 
+
+        except requests.exceptions.RequestException as error:
+            self.send_error(502, f"Erro ao acessar a API do TMDB: {error}")
+
 
 def run(server_class=http.server.ThreadingHTTPServer, handler_class=MyHandler, port=8000):
     server_address = ('0.0.0.0', port)

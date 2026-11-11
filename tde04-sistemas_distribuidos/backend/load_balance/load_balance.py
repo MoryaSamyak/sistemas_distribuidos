@@ -17,6 +17,11 @@ class LoadBalancerHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
 
+        if self.path == "/favicon.ico":
+            self.send_response(204)
+            self.end_headers()
+            return
+
         server = balance.get_server()
 
         print(f"Encaminhando requisição para: {server}" ,flush=True)
