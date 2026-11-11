@@ -3,6 +3,7 @@ FROM python:3.14-slim
 WORKDIR /app
 
 COPY  backend/ .
+ENV PYTHONPATH="/app/kafka"
 
 RUN pip install kafka-python requests
 

@@ -41,6 +41,8 @@ services:
       dockerfile: docker/dockerfile
     env_file:
       - .env
+    environment:
+      SERVER_NAME: server01
     ports:
       - "8000:8000"
   
@@ -50,6 +52,8 @@ services:
       dockerfile: docker/dockerfile
     env_file:
       - .env
+    environment:
+      SERVER_NAME: server02
     ports:
       - "8001:8000"
 
@@ -58,7 +62,9 @@ services:
       context: ..
       dockerfile: docker/dockerfile
     env_file:
-      - .env  
+      - .env
+    environment:
+      SERVER_NAME: server03  
     ports:
       - "8002:8000"
 

@@ -3,9 +3,9 @@ import json
 import os
 
 
-class producer:
+class Producer:
     def __init__(self):
-        self.topic = os.getenv("KAFKA_TOPIC", "http_requests_topic")
+        self.topic = os.getenv("KAFKA_TOPIC", "movies_topic")
 
         self.producer = KafkaProducer(
             bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092"),
@@ -13,7 +13,8 @@ class producer:
 
     def publish(self, data):
         try:
-            future = self.producer.send(self.topic, data)
+            key = data["server"].encode("utf-8")
+            future = self.producer.send(self.topic, data, key=key)
 
             result = future.get(timeout=5)
 

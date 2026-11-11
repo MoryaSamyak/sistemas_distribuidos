@@ -1,8 +1,9 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
+import json
 from least_connections import LeastConnections
-
+from producer import Producer
 
 
 SERVER_LIST = [
@@ -12,6 +13,7 @@ SERVER_LIST = [
 ]
 
 balance = LeastConnections(SERVER_LIST)
+producer = None
 
 class LoadBalancerHandler(BaseHTTPRequestHandler):
 
@@ -39,6 +41,14 @@ class LoadBalancerHandler(BaseHTTPRequestHandler):
 
             with response:
                 body = response.read()
+
+                if self.path == "/movie" and response.status == 200:
+                    try:
+                        data = json.loads(body.decode("utf-8"))
+                        producer.publish(data)
+                    except json.JSONDecodeError as error:
+                        print(f"Erro na resposta do servidor {server}: {error}", flush=True)
+
                 self.send_response(response.status)
 
                 for header_name, value in response.headers.items():
@@ -59,6 +69,10 @@ class LoadBalancerHandler(BaseHTTPRequestHandler):
             balance.release_connection(server)
 
 def run():
+
+    global producer
+    producer = Producer()
+
     server = ThreadingHTTPServer(('0.0.0.0', 8080), LoadBalancerHandler)
 
     try:
@@ -67,6 +81,7 @@ def run():
         pass
     finally:
         server.server_close()
+        producer.close()
 
 
 if __name__ == "__main__":

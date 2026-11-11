@@ -11,7 +11,7 @@ import requests
 class MyHandler(http.server.SimpleHTTPRequestHandler):  
     def do_GET(self):
 
-        server = socket.gethostname()
+        server = os.getenv("SERVER_NAME", socket.gethostname())
 
         if self.path == "/movie":
             self.get_movie(server)
@@ -45,7 +45,19 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             response = requests.get(url, headers=headers, params=params, timeout=5)
             response.raise_for_status()
             data = response.json()
-            movies = data.get("results", [])
+
+            total_pages =  min(data.get("total_pages", 1), 500)
+
+            random_page = random.randint(1, total_pages)  
+
+            response = requests.get(url, 
+                                    headers=headers,
+                                    params={"language": "pt-BR", 
+                                      "page": random_page}, timeout=5) 
+
+            response.raise_for_status()
+
+            movies = response.json().get("results", [])    
 
             if not movies:
                 self.send_error(404, "Nenhum filme encontrado.")
@@ -53,7 +65,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
             movie = random.choice(movies)
 
-            result = {"FilmShopNow. Uma indicação bacanuda para você assistir hoje!"
+            result = {"Film-ShopNow. Uma indicação bacanuda na black para você comprar hoje!": True,
                 "server": server,
                 "movie": {
                     "title": movie.get("title"),
