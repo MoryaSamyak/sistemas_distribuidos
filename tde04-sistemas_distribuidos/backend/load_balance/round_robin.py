@@ -1,12 +1,6 @@
 from threading import Lock  
 
 
-SERVER_LIST = [
-    "http://localhost:8001",
-    "http://localhost:8002",
-    "http://localhost:8003" 
-    ] 
-
 
 class RoundRobin:
 

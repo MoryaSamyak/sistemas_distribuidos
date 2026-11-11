@@ -12,13 +12,24 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
 
         server = os.getenv("SERVER_NAME", socket.gethostname())
-
+        
+        if self.path == "/health":
+            response = {"status": "healthy", "server": server}
+            response_body = json.dumps(response).encode("utf-8")
+            
+            self.send_response(200)
+            self.send_header("Content-type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(response_body)))
+            self.end_headers()
+            self.wfile.write(response_body)
+            return
+            
         if self.path == "/movie":
             self.get_movie(server)
             return
 
         
-        self.send_response(200)
+        self.send_error(404, "Rota não encontrada. Use /movie.")
 
 
     def get_movie(self, server):
@@ -36,13 +47,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             "Accept": "application/json"
         }
 
-        params = {
-            "language": "pt-BR",
-            "page": 1
-        }
+
 
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=5)
+            response = requests.get(url, headers=headers, timeout=5)
             response.raise_for_status()
             data = response.json()
 
