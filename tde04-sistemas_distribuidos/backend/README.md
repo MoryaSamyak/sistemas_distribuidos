@@ -1,7 +1,9 @@
-# Backend
+# TDE 04 Sistemas DIstribuidos
 
 Este projeto executa três instâncias HTTP, um balanceador de carga e um broker
-Kafka usando Docker Compose.
+Kafka usando Docker Compose para testar a funcionalidade de um  balanceador de 
+carga num sistema, tratando requisições, recebendo dados de uma API e publicando 
+no Kafka.
 
 ## Requisitos
 
